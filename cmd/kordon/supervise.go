@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/ef1m03/kordon/internal/app"
+	"github.com/ef1m03/kordon/internal/config"
+	"github.com/ef1m03/kordon/internal/procs"
 	"github.com/ef1m03/kordon/internal/ui"
 )
 
@@ -60,9 +62,30 @@ func supervise() bool {
 		app.Logf("Kordon упал (%v), перезапускаю", err)
 		if len(crashes) > 5 {
 			app.Logf("Kordon падает слишком часто, останавливаюсь")
+			releaseApps()
 			app.Notify(ui.T("crash.t"), ui.T("crash.b", app.LogPath()))
 			return true
 		}
 		time.Sleep(time.Second)
+	}
+}
+
+// releaseApps un-freezes the protected apps when the supervisor gives up: the crashed
+// child can't do it any more, and frozen apps (a browser, say) would otherwise stay
+// stuck until a reboot and look like the internet is gone.
+func releaseApps() {
+	cfg := config.Default()
+	if data, err := os.ReadFile(app.ConfigPath()); err == nil {
+		if c, err := config.Parse(data); err == nil {
+			cfg = c
+		}
+	}
+	ctl := procs.New()
+	all, err := ctl.List()
+	if err != nil {
+		return
+	}
+	for _, p := range procs.Filter(all, procs.Targets(cfg), os.Getpid()) {
+		_ = ctl.Resume(p)
 	}
 }

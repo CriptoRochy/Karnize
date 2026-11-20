@@ -41,6 +41,9 @@ func (d *Duration) UnmarshalYAML(n *yaml.Node) error {
 type CustomApp struct {
 	Name  string   `yaml:"name"`
 	Match []string `yaml:"match"`
+	// Route is optional: URLs answering like Cloudflare's /cdn-cgi/trace (ip=..., loc=...)
+	// on the app's own service, to check the route the app really takes.
+	Route []string `yaml:"route,omitempty"`
 }
 
 // TrustedNetwork is a local network (identified by its router) where apps may run as they are.
@@ -72,6 +75,7 @@ type Config struct {
 	IPServices    []string `yaml:"ip_services"`
 	MinAgree      int      `yaml:"min_agree"`
 	CheckIPv6     bool     `yaml:"check_ipv6"`
+	RouteCheck    bool     `yaml:"route_check"`
 	DNSCheck      string   `yaml:"dns_check"`
 	IPv6Services  []string `yaml:"ipv6_services"`
 	MenuBar       string   `yaml:"menubar"`
@@ -105,6 +109,7 @@ func Default() *Config {
 		IPServices:            append([]string(nil), DefaultIPServices...),
 		MinAgree:              2,
 		CheckIPv6:             true,
+		RouteCheck:            true,
 		DNSCheck:              "warn",
 		IPv6Services:          append([]string(nil), DefaultIPv6Services...),
 		MenuBar:               "ip",
@@ -145,6 +150,11 @@ func (c *Config) normalize() error {
 	for _, a := range c.CustomApps {
 		if strings.TrimSpace(a.Name) == "" || len(a.Match) == 0 {
 			return errors.New("custom_apps: у каждого приложения нужны name и match")
+		}
+		for _, u := range a.Route {
+			if !strings.HasPrefix(u, "https://") {
+				return fmt.Errorf("custom_apps.%s.route: %q - нужен адрес https://", a.Name, u)
+			}
 		}
 	}
 	if c.Grace < 0 || c.CloseTimeout < 0 {
@@ -213,7 +223,10 @@ func (c *Config) Need6() int { return min(c.MinAgree, len(c.IPv6Services)) }
 func (c *Config) Clone() *Config {
 	n := *c
 	n.Apps = append([]string(nil), c.Apps...)
-	n.CustomApps = append([]CustomApp(nil), c.CustomApps...)
+	n.CustomApps = make([]CustomApp, len(c.CustomApps))
+	for i, a := range c.CustomApps {
+		n.CustomApps[i] = CustomApp{Name: a.Name, Match: append([]string(nil), a.Match...), Route: append([]string(nil), a.Route...)}
+	}
 	n.Allow.IPs = append([]string(nil), c.Allow.IPs...)
 	n.Allow.Countries = append([]string(nil), c.Allow.Countries...)
 	n.IPServices = append([]string(nil), c.IPServices...)

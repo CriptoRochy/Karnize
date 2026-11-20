@@ -71,7 +71,15 @@ type ProbeResult struct {
 	IP6, Country6   string   // public IPv6, empty if there is none
 	DNS, DNSCountry string   // public address of the DNS resolver in use
 	NetID           string   // identifies the local network (the router's MAC)
-	Err             error
+	// Routes are what the protected services themselves saw, by trace URL;
+	// a URL that didn't answer is missing.
+	Routes map[string]Route
+	Err    error
+}
+
+// Route is the IP and country one protected service sees.
+type Route struct {
+	IP, Country string
 }
 
 type Deps struct {
@@ -81,6 +89,9 @@ type Deps struct {
 	Procs      procs.Controller
 	SaveConfig func(*config.Config) error
 	Self       int
+	// FirstRun: config.yaml was just created, so the first IP becomes the allowed one.
+	// Only then: an allow-list the user emptied later must not quietly fill with the home IP.
+	FirstRun bool
 }
 
 // group is a set of apps sharing one allow-list, with its own state.
@@ -130,6 +141,8 @@ type Guard struct {
 	recovered    bool
 	lastStep     time.Time
 	dnsWarned    string
+	routes       map[string]Route
+	autoAllow    bool
 
 	counters Counters
 	history  []Event
@@ -145,7 +158,7 @@ type Counters struct {
 }
 
 func New(cfg *config.Config, d Deps) *Guard {
-	g := &Guard{d: d}
+	g := &Guard{d: d, autoAllow: d.FirstRun}
 	g.setConfig(cfg)
 	return g
 }
@@ -235,12 +248,17 @@ func (g *Guard) dnsLeak(a config.Allow) bool {
 func (g *Guard) emit(now time.Time, e Event) {
 	e.At = now
 	switch e.Kind {
+	// A freeze or block with no protected app running hurt nothing: don't count it.
 	case EvFrozen:
-		g.counters.Freezes++
+		if len(e.Apps) > 0 {
+			g.counters.Freezes++
+		}
 	case EvResumed:
 		g.counters.Saves++
 	case EvBlocked:
-		g.counters.Blocks++
+		if len(e.Apps) > 0 {
+			g.counters.Blocks++
+		}
 	case EvKilledNew:
 		g.counters.Killed++
 	}
@@ -340,7 +358,7 @@ func (g *Guard) HandleProbe(now time.Time, r ProbeResult) {
 			g.emit(now, Event{Kind: EvOffline})
 		}
 		g.offline, g.ip, g.country, g.ip6, g.cc6, g.votes, g.others = true, "", "", "", "", 0, nil
-		g.dns, g.dnsCC = "", ""
+		g.dns, g.dnsCC, g.routes = "", "", nil
 		g.nextCheck = now.Add(FastCheck)
 		if g.paused(now) {
 			return
@@ -366,15 +384,29 @@ func (g *Guard) HandleProbe(now time.Time, r ProbeResult) {
 	g.offline, g.ip, g.country = false, r.IP, r.Country
 	g.ip6, g.cc6, g.votes, g.others = r.IP6, r.Country6, r.Votes, r.Others
 	g.dns, g.dnsCC = r.DNS, r.DNSCountry
+	g.routes = r.Routes
 
-	if g.cfg.Allow.IsEmpty() {
-		// First run: whatever network the user installed Kordon on is the right one.
-		g.cfg.Allow.AddIP(r.IP)
-		if r.IP6 != "" {
-			g.cfg.Allow.AddIP(r.IP6)
+	if g.autoAllow {
+		g.autoAllow = false
+		if g.cfg.Allow.IsEmpty() {
+			// First run: whatever network the user installed Kordon on is the right one.
+			// With split routing the IP services may see the direct address: what the
+			// protected services see is the VPN, so that is what gets allowed.
+			ip, cc := r.IP, r.Country
+			if rips := g.routeIPs(); len(rips) > 0 {
+				for _, rt := range rips {
+					g.cfg.Allow.AddIP(rt.IP)
+				}
+				ip, cc = rips[0].IP, rips[0].Country
+			} else {
+				g.cfg.Allow.AddIP(r.IP)
+			}
+			if r.IP6 != "" {
+				g.cfg.Allow.AddIP(r.IP6)
+			}
+			g.save()
+			g.emit(now, Event{Kind: EvAutoAllowed, IP: ip, Country: cc, Notify: true})
 		}
-		g.save()
-		g.emit(now, Event{Kind: EvAutoAllowed, IP: r.IP, Country: r.Country, Notify: true})
 	}
 
 	if g.cfg.DNSCheck == "warn" && !g.trusted() && g.dnsLeak(g.cfg.Allow) {
@@ -386,17 +418,70 @@ func (g *Guard) HandleProbe(now time.Time, r ProbeResult) {
 	g.reevaluateAll(now)
 }
 
+// routeIPs lists the distinct routes the protected services reported, in target order.
+func (g *Guard) routeIPs() []Route {
+	var out []Route
+	seen := map[string]bool{}
+	for _, gr := range g.groups {
+		for _, t := range gr.tgts {
+			for _, u := range t.Routes {
+				if rt, ok := g.routes[u]; ok && !seen[rt.IP] {
+					seen[rt.IP] = true
+					out = append(out, rt)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// routeVerdict judges a group by the address its services see. ok is false when it
+// can't: route checks are off, an app of the group has no route, or a route didn't
+// answer. Then the IP services decide, as before.
+func (g *Guard) routeVerdict(gr *group, a config.Allow) (r Reason, ok bool) {
+	if !g.cfg.RouteCheck || len(gr.tgts) == 0 {
+		return NoReason, false
+	}
+	var routes []Route
+	for _, t := range gr.tgts {
+		if len(t.Routes) == 0 {
+			return NoReason, false
+		}
+		for _, u := range t.Routes {
+			rt, ok := g.routes[u]
+			if !ok {
+				return NoReason, false
+			}
+			routes = append(routes, rt)
+		}
+	}
+	for _, rt := range routes {
+		if !a.Matches(rt.IP, rt.Country) {
+			return IPNotAllowed, true
+		}
+	}
+	return NoReason, true
+}
+
 // verdict says why the network is not trusted for a group, or NoReason if it is.
 func (g *Guard) verdict(gr *group) Reason {
 	if g.trusted() {
 		return NoReason
 	}
 	a := g.allowFor(gr)
-	if !a.Matches(g.ip, g.country) {
-		return IPNotAllowed
-	}
-	if g.votes < g.cfg.Need() || len(g.others) > 0 {
-		return Unconfirmed
+	if why, ok := g.routeVerdict(gr, a); ok {
+		if why != NoReason {
+			return why
+		}
+		// The services themselves see an allowed address: the IP services may
+		// disagree among themselves (split routing), that's not this group's traffic.
+	} else {
+		if !a.Matches(g.ip, g.country) {
+			return IPNotAllowed
+		}
+		if g.votes < g.cfg.Need() || len(g.others) > 0 {
+			return Unconfirmed
+		}
 	}
 	if g.cfg.CheckIPv6 && g.ip6 != "" && !a.Matches(g.ip6, g.cc6) {
 		return IPv6Leak
@@ -448,8 +533,29 @@ func (g *Guard) reevaluate(now time.Time, gr *group) {
 	}
 }
 
+// addrFor is the address to tell about for a group: what its services see when the
+// route decides (the one that isn't allowed, if any), else what the IP services see.
+func (g *Guard) addrFor(gr *group) (ip, cc string) {
+	a := g.allowFor(gr)
+	if _, ok := g.routeVerdict(gr, a); !ok {
+		return g.ip, g.country
+	}
+	for _, t := range gr.tgts {
+		for _, u := range t.Routes {
+			if rt := g.routes[u]; !a.Matches(rt.IP, rt.Country) {
+				return rt.IP, rt.Country
+			}
+			if ip == "" {
+				ip, cc = g.routes[u].IP, g.routes[u].Country
+			}
+		}
+	}
+	return ip, cc
+}
+
 func (g *Guard) event(gr *group, kind EventKind, apps []string, notify bool) Event {
-	return Event{Kind: kind, Reason: gr.reason, IP: g.ip, Country: g.country, IP6: g.ip6, Country6: g.cc6,
+	ip, cc := g.addrFor(gr)
+	return Event{Kind: kind, Reason: gr.reason, IP: ip, Country: cc, IP6: g.ip6, Country6: g.cc6,
 		Others: g.others, DNS: g.dns, DNSCountry: g.dnsCC, Apps: apps, Dur: g.cfg.Grace.D(), Notify: notify}
 }
 
@@ -670,6 +776,12 @@ func (g *Guard) AllowCurrentIP(now time.Time) bool {
 	if g.ip6 != "" && c.Allow.AddIP(g.ip6) {
 		added = true
 	}
+	// With split routing the protected services see another address: allow it too.
+	for _, rt := range g.routeIPs() {
+		if c.Allow.AddIP(rt.IP) {
+			added = true
+		}
+	}
 	if !added {
 		return false
 	}
@@ -689,6 +801,11 @@ func (g *Guard) AllowCurrentCountry(now time.Time) bool {
 	added := c.Allow.AddCountry(g.country)
 	if g.ip6 != "" && c.Allow.AddCountry(g.cc6) {
 		added = true
+	}
+	for _, rt := range g.routeIPs() {
+		if rt.Country != "" && c.Allow.AddCountry(rt.Country) {
+			added = true
+		}
 	}
 	if !added {
 		return false

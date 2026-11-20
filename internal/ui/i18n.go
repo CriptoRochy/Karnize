@@ -85,6 +85,8 @@ var msgs = map[string]map[string]string{
 		"ev.offline":        "Пропал интернет",
 		"ev.online":         "Интернет вернулся: %s",
 		"ev.frozen":         "Заморожено (%s): %s",
+		"ev.frozen.none":    "Сеть не подходит (%s), защищаемые программы не запущены",
+		"ev.blocked.none":   "Сеть так и не подошла, защищаемые программы не запущены",
 		"ev.frozen.t":       "%s: заморожено",
 		"ev.frozen.ip.b":    "IP %s не разрешён. Если разрешённый не вернётся за %s, закрою.",
 		"ev.frozen.off.b":   "Пропал интернет. Если не вернётся за %s, закрою.",
@@ -208,6 +210,8 @@ var msgs = map[string]map[string]string{
 		"ev.offline":        "Internet is gone",
 		"ev.online":         "Internet is back: %s",
 		"ev.frozen":         "Frozen (%s): %s",
+		"ev.frozen.none":    "Network not allowed (%s), no protected app is running",
+		"ev.blocked.none":   "Network still not allowed, no protected app is running",
 		"ev.frozen.t":       "%s: frozen",
 		"ev.frozen.ip.b":    "IP %s is not allowed. If an allowed one isn't back within %s, I'll close it.",
 		"ev.frozen.off.b":   "No internet. If it isn't back within %s, I'll close it.",
@@ -410,11 +414,19 @@ func EventLine(e guard.Event) string {
 	case guard.EvOnline:
 		s = T("ev.online", ipc)
 	case guard.EvFrozen:
-		s = T("ev.frozen", reasonText(e.Reason), appsText(e.Apps))
+		if len(e.Apps) == 0 {
+			s = T("ev.frozen.none", reasonText(e.Reason))
+		} else {
+			s = T("ev.frozen", reasonText(e.Reason), appsText(e.Apps))
+		}
 	case guard.EvResumed:
 		s = T("ev.resumed", appsText(e.Apps))
 	case guard.EvBlocked:
-		s = T("ev.blocked", appsText(e.Apps))
+		if len(e.Apps) == 0 {
+			s = T("ev.blocked.none")
+		} else {
+			s = T("ev.blocked", appsText(e.Apps))
+		}
 	case guard.EvKilledNew:
 		s = T("ev.killednew", appsText(e.Apps))
 	case guard.EvUnblocked:

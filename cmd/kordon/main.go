@@ -26,6 +26,7 @@ import (
 	"github.com/ef1m03/kordon/internal/config"
 	"github.com/ef1m03/kordon/internal/guard"
 	"github.com/ef1m03/kordon/internal/netwatch"
+	"github.com/ef1m03/kordon/internal/procs"
 	"github.com/ef1m03/kordon/internal/ui"
 	"github.com/ef1m03/kordon/internal/update"
 	"github.com/ef1m03/kordon/internal/window"
@@ -96,7 +97,7 @@ func run(tray bool) {
 	update.Cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	r := app.NewRunner(ctx, cfg)
+	r := app.NewRunner(ctx, cfg, created)
 	r.OnConfigError = func(err error) { app.Notify(ui.T("cfg.error.t"), ui.T("cfg.error.b", err)) }
 	stats := app.LoadStats()
 	srv := &ui.Server{G: r.G, Stats: stats, Version: version}
@@ -151,7 +152,7 @@ func cli(args []string) error {
 	setupLang(cfg)
 	switch args[0] {
 	case "status":
-		return status()
+		return status(cfg)
 	case "allow":
 		return allow(cfg, args[1:])
 	case "config":
@@ -196,11 +197,13 @@ const usage = `Kordon - kill switch for apps: freezes them when your network or 
 https://github.com/ef1m03/kordon
 `
 
-func status() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+// status checks with the user's own settings (ip_services, min_agree), not the defaults,
+// so it agrees with what the running app decides.
+func status(cfg *config.Config) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()
 	geo := netwatch.NewGeo()
-	r, err := netwatch.PublicIP(ctx, config.DefaultIPServices, 4*time.Second, false, 2)
+	r, err := netwatch.PublicIP(ctx, cfg.IPServices, 4*time.Second, false, cfg.Need())
 	if err != nil {
 		fmt.Println("IP:      -", "(offline)")
 	} else {
@@ -209,8 +212,26 @@ func status() error {
 			fmt.Println("         other services say:", strings.Join(r.Others, ", "))
 		}
 	}
-	if r6, err := netwatch.PublicIP(ctx, config.DefaultIPv6Services, 4*time.Second, true, 1); err == nil {
-		fmt.Println("IPv6:   ", ui.IPWithCountry(r6.IP, geo.Country(ctx, r6.IP, 4*time.Second)))
+	if cfg.CheckIPv6 {
+		if r6, err := netwatch.PublicIP(ctx, cfg.IPv6Services, 4*time.Second, true, 1); err == nil {
+			fmt.Println("IPv6:   ", ui.IPWithCountry(r6.IP, geo.Country(ctx, r6.IP, 4*time.Second)))
+		}
+	}
+	if cfg.RouteCheck {
+		urls := procs.RouteURLs(procs.Targets(cfg))
+		routes := netwatch.Routes(ctx, urls, 4*time.Second)
+		for _, u := range urls {
+			host := strings.TrimSuffix(strings.TrimPrefix(u, "https://"), "/cdn-cgi/trace")
+			if rt, ok := routes[u]; ok {
+				cc := rt.Country
+				if cc == "" {
+					cc = geo.Country(ctx, rt.IP, 4*time.Second)
+				}
+				fmt.Println("Route:  ", host, "->", ui.IPWithCountry(rt.IP, cc))
+			} else {
+				fmt.Println("Route:  ", host, "-> no answer")
+			}
+		}
 	}
 	s, err := app.ReadState()
 	running := err == nil && processAlive(s.PID) && time.Since(s.Updated) < 24*time.Hour
@@ -238,6 +259,14 @@ func allow(cfg *config.Config, args []string) error {
 		}
 		cfg.Allow.AddIP(r.IP)
 		what = r.IP
+		// With split routing the protected services see another address than the IP services.
+		if cfg.RouteCheck {
+			for _, rt := range netwatch.Routes(ctx, procs.RouteURLs(procs.Targets(cfg)), 4*time.Second) {
+				if cfg.Allow.AddIP(rt.IP) {
+					what += ", " + rt.IP
+				}
+			}
+		}
 		if r6, err := netwatch.PublicIP(ctx, cfg.IPv6Services, 4*time.Second, true, 1); err == nil && cfg.CheckIPv6 {
 			cfg.Allow.AddIP(r6.IP)
 			what += ", " + r6.IP

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"os"
@@ -16,6 +17,7 @@ import (
 const (
 	tick        = 500 * time.Millisecond
 	cfgPoll     = 2 * time.Second
+	cfgSettle   = 700 * time.Millisecond // a config edit must be this old before it's read
 	httpTimeout = 4 * time.Second
 )
 
@@ -30,7 +32,8 @@ type Runner struct {
 	OnConfigError func(error)
 }
 
-func NewRunner(ctx context.Context, cfg *config.Config) *Runner {
+// firstRun says config.yaml was just created: the first IP seen becomes the allowed one.
+func NewRunner(ctx context.Context, cfg *config.Config, firstRun bool) *Runner {
 	r := &Runner{results: make(chan guard.ProbeResult, 4), geo: netwatch.NewGeo(), ctx: ctx}
 	if st, err := os.Stat(ConfigPath()); err == nil {
 		r.cfgMod = st.ModTime()
@@ -41,6 +44,7 @@ func NewRunner(ctx context.Context, cfg *config.Config) *Runner {
 		Procs:       procs.New(),
 		SaveConfig:  r.save,
 		Self:        os.Getpid(),
+		FirstRun:    firstRun,
 	})
 	return r
 }
@@ -65,6 +69,21 @@ func (r *Runner) probe(c *config.Config) {
 				// One answer is enough here: the point is to see whether IPv6 goes around the VPN.
 				v6, err6 = netwatch.PublicIP(r.ctx, c.IPv6Services, httpTimeout, true, 1)
 			}()
+		}
+		if c.RouteCheck {
+			if urls := procs.RouteURLs(procs.Targets(c)); len(urls) > 0 {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					res.Routes = map[string]guard.Route{}
+					for u, rt := range netwatch.Routes(r.ctx, urls, httpTimeout) {
+						if rt.Country == "" { // loc=XX or Tor: ask the geo services like for any IP
+							rt.Country = r.geo.Country(r.ctx, rt.IP, httpTimeout)
+						}
+						res.Routes[u] = guard.Route{IP: rt.IP, Country: rt.Country}
+					}
+				}()
+			}
 		}
 		wg.Add(1)
 		go func() {
@@ -111,10 +130,22 @@ func (r *Runner) reloadIfEdited(now time.Time) {
 		r.modMu.Unlock()
 		return
 	}
+	// Many editors (and PowerShell's Set-Content) truncate the file first and write
+	// it after. Read too early and an empty file parses as the defaults - Claude
+	// protected, nothing allowed - and everything freezes for a moment. So the file
+	// must have been left alone for a bit, and an empty one is never applied.
+	if now.Sub(st.ModTime()) < cfgSettle {
+		r.modMu.Unlock()
+		return // the next poll picks it up
+	}
 	r.cfgMod = st.ModTime()
 	r.modMu.Unlock()
 	data, err := os.ReadFile(ConfigPath())
 	if err != nil {
+		return
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		Logf("config.yaml пуст - оставляю прежние настройки")
 		return
 	}
 	c, err := config.Parse(data)

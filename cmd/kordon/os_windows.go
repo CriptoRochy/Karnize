@@ -8,8 +8,18 @@ import (
 
 // The .exe is built as a GUI program (no console window flashing at login), so
 // when it's run from a terminal with a command, it borrows that terminal for output.
+// Output that was redirected (`kordon status > status.txt`, a pipe) already has a
+// handle and is left alone: writing to CONOUT$ instead would leave the file empty.
 func attachConsole() {
 	if len(os.Args) < 2 {
+		return
+	}
+	valid := func(f *os.File) bool {
+		h := windows.Handle(f.Fd())
+		return h != 0 && h != windows.InvalidHandle
+	}
+	outOK, errOK := valid(os.Stdout), valid(os.Stderr)
+	if outOK && errOK {
 		return
 	}
 	k := windows.NewLazySystemDLL("kernel32.dll")
@@ -17,8 +27,16 @@ func attachConsole() {
 	if r, _, _ := k.NewProc("AttachConsole").Call(attachParent); r == 0 {
 		return
 	}
+	// Go writes UTF-8; without this, Cyrillic comes out garbled in PowerShell and cmd.
+	const cpUTF8 = 65001
+	_ = windows.SetConsoleOutputCP(cpUTF8)
 	if f, err := os.OpenFile("CONOUT$", os.O_WRONLY, 0); err == nil {
-		os.Stdout, os.Stderr = f, f
+		if !outOK {
+			os.Stdout = f
+		}
+		if !errOK {
+			os.Stderr = f
+		}
 	}
 }
 

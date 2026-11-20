@@ -62,6 +62,7 @@ func newHarness(t *testing.T, allow ...string) *harness {
 		StartProbe:  func(*config.Config) { h.probes++ },
 		Procs:       h.p,
 		SaveConfig:  func(c *config.Config) error { h.saved = c; return nil },
+		FirstRun:    len(allow) == 0,
 	})
 	h.g.OnChange(func(_ Snapshot, evs []Event) { h.events = append(h.events, evs...) })
 	return h

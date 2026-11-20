@@ -16,6 +16,9 @@ import (
 
 var ErrOffline = errors.New("offline")
 
+// lateAnswers is how long PublicIP keeps listening after enough services agreed.
+const lateAnswers = 500 * time.Millisecond
+
 // client builds a fresh HTTP client for one check: no keep-alive, because a reused
 // connection stays on the old route and reports the old IP after the VPN switches;
 // the system proxy read right now; one address family, so IPv4 and IPv6 are
@@ -94,11 +97,24 @@ func PublicIP(ctx context.Context, services []string, timeout time.Duration, v6 
 	}
 	go func() { wg.Wait(); close(answers) }()
 
+	// Once need services agree, the rest get a moment more: with split routing a slower
+	// service often reports the other address, and stopping at the first two made the
+	// result flip between checks.
 	votes := map[string]int{}
-	for ip := range answers {
-		votes[ip]++
-		if votes[ip] >= need {
-			break
+	var settle <-chan time.Time
+collect:
+	for {
+		select {
+		case ip, ok := <-answers:
+			if !ok {
+				break collect
+			}
+			votes[ip]++
+			if settle == nil && votes[ip] >= need {
+				settle = time.After(lateAnswers)
+			}
+		case <-settle:
+			break collect
 		}
 	}
 	return tally(votes)

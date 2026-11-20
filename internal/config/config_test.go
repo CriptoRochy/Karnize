@@ -11,7 +11,8 @@ func TestRenderParseRoundTrip(t *testing.T) {
 		CommentLang = lang
 		c := Default()
 		c.Apps = []string{"claude", "cursor"}
-		c.CustomApps = []CustomApp{{Name: "My App", Match: []string{"/MyApp.app/", "myapp.exe"}}}
+		c.CustomApps = []CustomApp{{Name: "My App", Match: []string{"/MyApp.app/", "myapp.exe"}, Route: []string{"https://my.app/cdn-cgi/trace"}}}
+		c.RouteCheck = false
 		c.Allow.IPs = []string{"64.137.54.87", "10.0.0.0/8"}
 		c.Allow.Countries = []string{"NL", "DE"}
 		c.Grace = Duration(90 * time.Second)
@@ -25,6 +26,9 @@ func TestRenderParseRoundTrip(t *testing.T) {
 		}
 		if Render(got) != Render(c) {
 			t.Fatalf("%s: round trip differs:\n%s\n---\n%s", lang, Render(c), Render(got))
+		}
+		if got.RouteCheck || len(got.CustomApps[0].Route) != 1 || got.CustomApps[0].Route[0] != "https://my.app/cdn-cgi/trace" {
+			t.Fatalf("%s: route settings lost on save: %+v", lang, got)
 		}
 		if got.Grace.D() != 90*time.Second || got.CustomApps[0].Match[1] != "myapp.exe" {
 			t.Fatalf("%s: values lost: %+v", lang, got)

@@ -63,6 +63,7 @@ type Snapshot struct {
 	Others          []string // addresses other IP services reported
 	DNS, DNSCountry string
 	DNSLeak         bool
+	Routes          []Route // what the protected services see, if route checks answered
 	NetID           string
 	Network         string // name of the trusted network we're on, if any
 	Offline         bool
@@ -84,6 +85,7 @@ func (g *Guard) snapshot(now time.Time) Snapshot {
 		IP:     g.ip, Country: g.country, IP6: g.ip6, Country6: g.cc6, Others: append([]string(nil), g.others...),
 		DNS: g.dns, DNSCountry: g.dnsCC, NetID: g.netID,
 		Offline: g.offline, Checking: g.probing,
+		Routes:   g.routeIPs(),
 		Counters: g.counters,
 		Config:   g.cfg.Clone(),
 		History:  append([]Event(nil), g.history...),
@@ -125,8 +127,8 @@ func (s Snapshot) Allowed() bool { return s.AllowedNow }
 // key changes whenever something visible in the menu changes (the grace countdown by the second).
 func (s Snapshot) key() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%d|%d|%s|%s|%s|%s|%v|%s|%s|%s|%t|%d|%d|%v|%d|", s.Status, s.Reason, s.IP, s.Country, s.IP6, s.Country6,
-		s.Others, s.DNS, s.DNSCountry, s.Network, s.Offline, int(s.GraceLeft.Seconds()), s.Frozen, s.PausedUntil.Unix(), len(s.Running))
+	fmt.Fprintf(&b, "%d|%d|%s|%s|%s|%s|%v|%s|%s|%s|%t|%d|%d|%v|%d|%v|", s.Status, s.Reason, s.IP, s.Country, s.IP6, s.Country6,
+		s.Others, s.DNS, s.DNSCountry, s.Network, s.Offline, int(s.GraceLeft.Seconds()), s.Frozen, s.PausedUntil.Unix(), len(s.Running), s.Routes)
 	for _, gr := range s.Groups {
 		fmt.Fprintf(&b, "%d%d%d%v;", gr.Status, gr.Reason, int(gr.GraceLeft.Seconds()), gr.Running)
 	}

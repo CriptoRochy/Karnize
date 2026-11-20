@@ -30,9 +30,12 @@ type Rule struct {
 
 type Preset struct {
 	ID, Name string
-	Darwin   Rule
-	Windows  Rule
-	Linux    Rule
+	// Routes are the app's own Cloudflare /cdn-cgi/trace URLs: they tell the IP and
+	// country the service itself sees, which is what matters with split routing.
+	Routes  []string
+	Darwin  Rule
+	Windows Rule
+	Linux   Rule
 }
 
 func (p Preset) Rule() Rule {
@@ -48,15 +51,15 @@ func (p Preset) Rule() Rule {
 
 // Presets are the apps people most often keep behind a VPN.
 var Presets = []Preset{
-	{ID: "claude", Name: "Claude",
+	{ID: "claude", Name: "Claude", Routes: []string{"https://api.anthropic.com/cdn-cgi/trace", "https://claude.ai/cdn-cgi/trace"},
 		Darwin:  Rule{Paths: []string{"/Claude.app/"}, Names: []string{"claude"}, Args: []string{"@anthropic-ai/claude-code"}},
 		Windows: Rule{Names: []string{"claude"}, Paths: []string{`\AnthropicClaude\`}},
 		Linux:   Rule{Names: []string{"claude"}, Args: []string{"@anthropic-ai/claude-code"}}},
-	{ID: "chatgpt", Name: "ChatGPT",
+	{ID: "chatgpt", Name: "ChatGPT", Routes: []string{"https://chatgpt.com/cdn-cgi/trace"},
 		Darwin:  Rule{Paths: []string{"/ChatGPT.app/"}},
 		Windows: Rule{Names: []string{"ChatGPT"}},
 		Linux:   Rule{Names: []string{"chatgpt"}}},
-	{ID: "codex", Name: "Codex",
+	{ID: "codex", Name: "Codex", Routes: []string{"https://api.openai.com/cdn-cgi/trace", "https://chatgpt.com/cdn-cgi/trace"},
 		Darwin:  Rule{Paths: []string{"/Codex.app/"}, Names: []string{"codex"}, Args: []string{"@openai/codex"}},
 		Windows: Rule{Names: []string{"codex"}},
 		Linux:   Rule{Names: []string{"codex"}, Args: []string{"@openai/codex"}}},
@@ -76,7 +79,7 @@ var Presets = []Preset{
 		Darwin:  Rule{Names: []string{"gemini"}, Args: []string{"@google/gemini-cli"}},
 		Windows: Rule{Names: []string{"gemini"}},
 		Linux:   Rule{Names: []string{"gemini"}, Args: []string{"@google/gemini-cli"}}},
-	{ID: "perplexity", Name: "Perplexity",
+	{ID: "perplexity", Name: "Perplexity", Routes: []string{"https://www.perplexity.ai/cdn-cgi/trace"},
 		Darwin:  Rule{Paths: []string{"/Perplexity.app/"}},
 		Windows: Rule{Names: []string{"Perplexity"}},
 		Linux:   Rule{Names: []string{"perplexity"}}},
@@ -154,9 +157,10 @@ func (r Rule) Match(p Proc) bool {
 
 // Target is a named rule to look for.
 type Target struct {
-	ID   string // preset id, or a custom app's lowercased name (the key in app_rules)
-	Name string
-	Rule Rule
+	ID     string // preset id, or a custom app's lowercased name (the key in app_rules)
+	Name   string
+	Rule   Rule
+	Routes []string // trace URLs of the app's own service, may be empty
 }
 
 // Targets builds the list of apps to protect from the config.
@@ -164,13 +168,28 @@ func Targets(c *config.Config) []Target {
 	var ts []Target
 	for _, id := range c.Apps {
 		if p, ok := PresetByID(id); ok {
-			ts = append(ts, Target{ID: p.ID, Name: p.Name, Rule: p.Rule()})
+			ts = append(ts, Target{ID: p.ID, Name: p.Name, Rule: p.Rule(), Routes: p.Routes})
 		}
 	}
 	for _, a := range c.CustomApps {
-		ts = append(ts, Target{ID: strings.ToLower(a.Name), Name: a.Name, Rule: ParseMatch(a.Match)})
+		ts = append(ts, Target{ID: strings.ToLower(a.Name), Name: a.Name, Rule: ParseMatch(a.Match), Routes: a.Route})
 	}
 	return ts
+}
+
+// RouteURLs lists the distinct trace URLs of all targets.
+func RouteURLs(ts []Target) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, t := range ts {
+		for _, u := range t.Routes {
+			if !seen[u] {
+				seen[u] = true
+				out = append(out, u)
+			}
+		}
+	}
+	return out
 }
 
 // Filter keeps the processes that belong to one of the targets and labels them.

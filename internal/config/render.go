@@ -12,13 +12,16 @@ import (
 var CommentLang = "ru"
 
 type tpl struct {
-	rules, trusted, dns string
+	rules, trusted, dns, route string
 	header, apps, appsList, custom, allow, ips, countries,
 	freeze, offline, grace, closeT, interval, services, agree, ipv6, services6, menubar, update, lang, notify string
 }
 
 var templates = map[string]tpl{
 	"ru": {
+		route: "# Проверять маршрут до самих сервисов (Claude, ChatGPT, Codex, Perplexity): какой IP\n" +
+			"# и страну видит сам сервис. Нужно при раздельной маршрутизации, когда сервисы проверки IP\n" +
+			"# называют разные адреса. Для своих приложений можно указать route: [\"https://.../cdn-cgi/trace\"].",
 		rules:   "# Свои правила для отдельных приложений вместо общих allow. Ключ - id из apps\n# или имя своего приложения. Пример:\n#   cursor:\n#     countries: [NL, DE, US]",
 		trusted: "# Доверенные сети: здесь приложения работают без проверки IP (дом, офис).\n# Сеть узнаётся по её роутеру. Проще добавлять из панели Kordon: «Доверять этой сети».",
 		dns:     "# Утечка DNS (запросы к сайтам идут мимо VPN): warn - предупредить,\n# block - заморозить, как при чужом IP, off - не проверять.",
@@ -49,6 +52,9 @@ var templates = map[string]tpl{
 		notify:    "# Показывать уведомления.",
 	},
 	"en": {
+		route: "# Check the route to the services themselves (Claude, ChatGPT, Codex, Perplexity): the IP\n" +
+			"# and country the service sees. Needed with split routing, when the IP services disagree.\n" +
+			"# Custom apps can set route: [\"https://.../cdn-cgi/trace\"].",
 		rules:   "# Per-app rules instead of the shared allow list. The key is an id from apps\n# or a custom app's name. Example:\n#   cursor:\n#     countries: [NL, DE, US]",
 		trusted: "# Trusted networks: apps run here without the IP check (home, office).\n# A network is recognised by its router. Easier from the Kordon panel: \"Trust this network\".",
 		dns:     "# DNS leaks (lookups bypass the VPN): warn - notify, block - freeze like a\n# foreign IP, off - don't check.",
@@ -129,6 +135,10 @@ func Render(c *Config) string {
 	for _, a := range c.CustomApps {
 		fmt.Fprintf(&custom, "\n  - name: %s\n    match:", strconv.Quote(a.Name))
 		custom.WriteString(indentList(a.Match))
+		if len(a.Route) > 0 {
+			custom.WriteString("\n    route:")
+			custom.WriteString(indentList(a.Route))
+		}
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s\n\n", t.header)
@@ -166,6 +176,7 @@ func Render(c *Config) string {
 	fmt.Fprintf(&b, "%s\nip_services:%s\n\n", t.services, list(c.IPServices))
 	fmt.Fprintf(&b, "%s\nmin_agree: %d\n\n", t.agree, c.MinAgree)
 	fmt.Fprintf(&b, "%s\ncheck_ipv6: %t\n\n", t.ipv6, c.CheckIPv6)
+	fmt.Fprintf(&b, "%s\nroute_check: %t\n\n", t.route, c.RouteCheck)
 	fmt.Fprintf(&b, "%s\ndns_check: %s\n\n", t.dns, c.DNSCheck)
 	fmt.Fprintf(&b, "%s\nipv6_services:%s\n\n", t.services6, list(c.IPv6Services))
 	fmt.Fprintf(&b, "%s\nmenubar: %s\n\n", t.menubar, c.MenuBar)
