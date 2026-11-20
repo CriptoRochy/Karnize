@@ -8,7 +8,7 @@ import (
 
 // The .exe is built as a GUI program (no console window flashing at login), so
 // when it's run from a terminal with a command, it borrows that terminal for output.
-// Output that was redirected (`kordon status > status.txt`, a pipe) already has a
+// Output that was redirected (`karnize status > status.txt`, a pipe) already has a
 // handle and is left alone: writing to CONOUT$ instead would leave the file empty.
 func attachConsole() {
 	if len(os.Args) < 2 {
@@ -51,5 +51,5 @@ func processAlive(pid int) bool {
 }
 
 // stopProcess: there is no SIGTERM on Windows, and a forced kill would leave
-// apps frozen, so the user restarts Kordon from the menu.
+// apps frozen, so the user restarts Karnize from the menu.
 func stopProcess(int) bool { return false }

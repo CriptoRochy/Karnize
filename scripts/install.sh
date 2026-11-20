@@ -1,14 +1,14 @@
 #!/bin/sh
-# Kordon installer for macOS and Linux.
+# Karnize installer for macOS and Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/ef1m03/kordon/main/scripts/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/ef1m03/kordon/main/scripts/install.sh | sh -s uninstall
+#   curl -fsSL https://raw.githubusercontent.com/CriptoRochy/Karnize/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/CriptoRochy/Karnize/main/scripts/install.sh | sh -s uninstall
 #
 # On macOS the app is downloaded with curl, so it carries no quarantine flag and
 # Gatekeeper doesn't block it although it isn't notarized (that costs $99/year).
 set -eu
 
-REPO="ef1m03/kordon"
+REPO="CriptoRochy/Karnize"
 BASE="https://github.com/$REPO/releases/latest/download"
 ACTION="${1:-install}"
 
@@ -28,8 +28,8 @@ verify() {
 }
 
 stop_running() {
-  # Quitting through the menu would un-freeze apps; on update Kordon does it at its next start.
-  pkill -x kordon 2>/dev/null || true
+  # Quitting through the menu would un-freeze apps; on update Karnize does it at its next start.
+  pkill -x karnize 2>/dev/null || true
   sleep 1
 }
 
@@ -38,31 +38,31 @@ mac() {
   [ -w "$dest" ] || dest="$HOME/Applications"
   if [ "$ACTION" = "uninstall" ]; then
     stop_running
-    rm -rf "$dest/Kordon.app" "$HOME/Applications/Kordon.app"
-    rm -f "$HOME/Library/LaunchAgents/dev.efimov.kordon.plist"
-    say "Kordon удалён. Настройки остались в ~/Library/Application Support/Kordon - удалите папку, если не нужны."
+    rm -rf "$dest/Karnize.app" "$HOME/Applications/Karnize.app"
+    rm -f "$HOME/Library/LaunchAgents/io.github.criptorochy.karnize.plist"
+    say "Karnize удалён. Настройки остались в ~/Library/Application Support/Karnize - удалите папку, если не нужны."
     return
   fi
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
-  say "Скачиваю Kordon…"
-  curl -fsSL "$BASE/Kordon-macos.zip" -o "$tmp/Kordon.zip"
-  verify "$tmp/Kordon.zip" Kordon-macos.zip
+  say "Скачиваю Karnize…"
+  curl -fsSL "$BASE/Karnize-macos.zip" -o "$tmp/Karnize.zip"
+  verify "$tmp/Karnize.zip" Karnize-macos.zip
   stop_running
   mkdir -p "$dest"
-  rm -rf "$dest/Kordon.app"
-  ditto -x -k "$tmp/Kordon.zip" "$dest"
-  xattr -dr com.apple.quarantine "$dest/Kordon.app" 2>/dev/null || true
-  open "$dest/Kordon.app"
-  say "Готово: Kordon в $dest и уже в строке меню (зелёная точка рядом с часами)."
+  rm -rf "$dest/Karnize.app"
+  ditto -x -k "$tmp/Karnize.zip" "$dest"
+  xattr -dr com.apple.quarantine "$dest/Karnize.app" 2>/dev/null || true
+  open "$dest/Karnize.app"
+  say "Готово: Karnize в $dest и уже в строке меню (зелёная точка рядом с часами)."
 }
 
 linux() {
   bin="$HOME/.local/bin"
   if [ "$ACTION" = "uninstall" ]; then
     stop_running
-    rm -f "$bin/kordon" "$HOME/.config/autostart/kordon.desktop"
-    say "Kordon удалён. Настройки остались в ~/.config/kordon."
+    rm -f "$bin/karnize" "$HOME/.config/autostart/karnize.desktop"
+    say "Karnize удалён. Настройки остались в ~/.config/karnize."
     return
   fi
   case "$(uname -m)" in
@@ -73,15 +73,15 @@ linux() {
   mkdir -p "$bin"
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
-  say "Скачиваю Kordon…"
-  curl -fsSL "$BASE/kordon-linux-$arch.tar.gz" -o "$tmp/kordon.tar.gz"
-  verify "$tmp/kordon.tar.gz" "kordon-linux-$arch.tar.gz"
+  say "Скачиваю Karnize…"
+  curl -fsSL "$BASE/karnize-linux-$arch.tar.gz" -o "$tmp/karnize.tar.gz"
+  verify "$tmp/karnize.tar.gz" "karnize-linux-$arch.tar.gz"
   stop_running
-  tar -xzf "$tmp/kordon.tar.gz" -C "$bin" kordon
-  chmod +x "$bin/kordon"
-  "$bin/kordon" autostart on
-  nohup "$bin/kordon" >/dev/null 2>&1 &
-  say "Готово: $bin/kordon запущен и стартует при входе."
+  tar -xzf "$tmp/karnize.tar.gz" -C "$bin" karnize
+  chmod +x "$bin/karnize"
+  "$bin/karnize" autostart on
+  nohup "$bin/karnize" >/dev/null 2>&1 &
+  say "Готово: $bin/karnize запущен и стартует при входе."
 }
 
 case "$(uname -s)" in

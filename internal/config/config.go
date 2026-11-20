@@ -1,4 +1,4 @@
-// Package config reads and writes Kordon's config.yaml.
+// Package config reads and writes Karnize's config.yaml.
 //
 // The file is meant to be edited by hand, so it is always written back from a
 // commented template (see render.go) instead of a bare yaml.Marshal.

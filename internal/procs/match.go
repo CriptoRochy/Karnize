@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ef1m03/kordon/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/config"
 )
 
 // Proc is one running process.

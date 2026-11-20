@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ef1m03/kordon/internal/config"
-	"github.com/ef1m03/kordon/internal/guard"
-	"github.com/ef1m03/kordon/internal/netwatch"
-	"github.com/ef1m03/kordon/internal/procs"
+	"github.com/CriptoRochy/Karnize/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/guard"
+	"github.com/CriptoRochy/Karnize/internal/netwatch"
+	"github.com/CriptoRochy/Karnize/internal/procs"
 )
 
 const (
@@ -192,7 +192,7 @@ func (r *Runner) Run() {
 	}
 }
 
-// State is what `kordon status` reads from state.json.
+// State is what `karnize status` reads from state.json.
 type State struct {
 	Updated   time.Time `json:"updated"`
 	Status    string    `json:"status"`

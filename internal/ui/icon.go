@@ -14,7 +14,7 @@ import (
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 
-	"github.com/ef1m03/kordon/internal/guard"
+	"github.com/CriptoRochy/Karnize/internal/guard"
 )
 
 // Tone is the colour of the icon.
@@ -154,42 +154,25 @@ func ICO(imgs ...*image.NRGBA) []byte {
 }
 
 // AppIcon is the big icon for the .app bundle, the .exe and the README.
+// Karnize's mark: a barrier - two posts and a bar - with a green light above it.
 func AppIcon(n int) *image.NRGBA {
 	img := image.NewNRGBA(image.Rect(0, 0, n, n))
 	fn := float64(n)
-	bg := color.NRGBA{0x11, 0x18, 0x27, 0xff}
-	m := fn * 0.09 // macOS icon grid margin
+	bg := color.NRGBA{0x0b, 0x3b, 0x3f, 0xff} // deep teal
+	m := fn * 0.09                            // macOS icon grid margin
 	fill(img, bg, func(x, y float64) float64 { return roundRectAlpha(x-m, y-m, fn-2*m, fn-2*m, (fn-2*m)*0.225) })
-	// Shield outline with a green dot: "a guarded border". Drawn with 4x4
-	// supersampling; the inner shield is the outer one inset by the stroke width.
-	inShield := func(x, y, cx, top, w, h float64) bool {
-		if y < top || y > top+h {
-			return false
+	// rect draws an anti-aliased rounded bar given in icon units (0..1).
+	rect := func(x0, y0, w, h float64) func(x, y float64) float64 {
+		return func(x, y float64) float64 {
+			return roundRectAlpha(x-x0*fn, y-y0*fn, w*fn, h*fn, math.Min(w, h)*fn/2)
 		}
-		t := (y - top) / h
-		half := w / 2
-		if t > 0.5 {
-			half *= math.Sqrt(math.Max(0, 1-math.Pow((t-0.5)/0.5, 2)))
-		}
-		return math.Abs(x-cx) <= half
 	}
-	sw := fn * 0.05
-	cx, top, w, h := fn/2, fn*0.23, fn*0.46, fn*0.56
-	shield := func(x, y float64) float64 {
-		hit := 0
-		for i := 0; i < 4; i++ {
-			for j := 0; j < 4; j++ {
-				px, py := x-0.5+(float64(i)+0.5)/4, y-0.5+(float64(j)+0.5)/4
-				if inShield(px, py, cx, top, w, h) && !inShield(px, py, cx, top+sw, w-2*sw, h-2.2*sw) {
-					hit++
-				}
-			}
-		}
-		return float64(hit) / 16
-	}
-	fill(img, color.NRGBA{0xe5, 0xe7, 0xeb, 0xff}, shield)
+	white := color.NRGBA{0xf1, 0xf5, 0xf9, 0xff}
+	fill(img, white, rect(0.27, 0.46, 0.07, 0.30)) // left post
+	fill(img, white, rect(0.66, 0.46, 0.07, 0.30)) // right post
+	fill(img, white, rect(0.21, 0.50, 0.58, 0.08)) // the bar
 	fill(img, tones[Green], func(x, y float64) float64 {
-		d := math.Hypot(x-fn/2, y-fn*0.47) - fn*0.085
+		d := math.Hypot(x-fn/2, y-fn*0.34) - fn*0.075
 		return math.Min(math.Max(0.5-d, 0), 1)
 	})
 	return img

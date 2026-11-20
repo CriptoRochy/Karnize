@@ -8,29 +8,30 @@ import (
 	"runtime"
 )
 
-// Dir is where Kordon keeps config.yaml, the log and the state file.
+// Dir is where Karnize keeps config.yaml, the log and the state file.
 func Dir() string {
-	if d := os.Getenv("KORDON_DIR"); d != "" {
+	if d := os.Getenv("KARNIZE_DIR"); d != "" {
 		return d // a separate profile for development and screenshots
 	}
 	base, err := os.UserConfigDir()
 	if err != nil {
 		base = os.TempDir()
 	}
-	name := "Kordon"
+	name := "Karnize"
 	if runtime.GOOS == "linux" {
-		name = "kordon"
+		name = "karnize"
 	}
 	return filepath.Join(base, name)
 }
 
 func ConfigPath() string { return filepath.Join(Dir(), "config.yaml") }
-func LogPath() string    { return filepath.Join(Dir(), "kordon.log") }
+func LogPath() string    { return filepath.Join(Dir(), "karnize.log") }
 func StatePath() string  { return filepath.Join(Dir(), "state.json") }
-func LockPath() string   { return filepath.Join(Dir(), "kordon.lock") }
+func LockPath() string   { return filepath.Join(Dir(), "karnize.lock") }
 
 const (
-	RepoURL     = "https://github.com/ef1m03/kordon"
-	StudioURL   = "https://efimovdev.ru"
-	TelegramURL = "https://t.me/efimov_dev"
+	RepoURL   = "https://github.com/CriptoRochy/Karnize"
+	IssuesURL = RepoURL + "/issues"
+	// UpstreamURL is the code Karnize is based on: Kordon 1.2.2 by Efimov Dev, GPL-3.0.
+	UpstreamURL = "https://github.com/ef1m03/kordon/tree/v1.2.2"
 )

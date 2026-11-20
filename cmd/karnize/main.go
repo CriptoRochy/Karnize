@@ -1,13 +1,13 @@
-// Kordon freezes chosen apps the moment your network or public IP changes,
+// Karnize freezes chosen apps the moment your network or public IP changes,
 // and closes them if an allowed IP doesn't come back.
 //
-//	kordon                 start in the menu bar / tray
-//	kordon status          what's going on right now
-//	kordon allow [IP|CC]   allow the current IP, a given IP/subnet or a country
-//	kordon config          print the config path
-//	kordon autostart on|off
-//	kordon headless        run without a tray icon (servers, Linux without a tray)
-//	kordon version
+//	karnize                 start in the menu bar / tray
+//	karnize status          what's going on right now
+//	karnize allow [IP|CC]   allow the current IP, a given IP/subnet or a country
+//	karnize config          print the config path
+//	karnize autostart on|off
+//	karnize headless        run without a tray icon (servers, Linux without a tray)
+//	karnize version
 package main
 
 import (
@@ -22,14 +22,14 @@ import (
 
 	"github.com/gofrs/flock"
 
-	"github.com/ef1m03/kordon/internal/app"
-	"github.com/ef1m03/kordon/internal/config"
-	"github.com/ef1m03/kordon/internal/guard"
-	"github.com/ef1m03/kordon/internal/netwatch"
-	"github.com/ef1m03/kordon/internal/procs"
-	"github.com/ef1m03/kordon/internal/ui"
-	"github.com/ef1m03/kordon/internal/update"
-	"github.com/ef1m03/kordon/internal/window"
+	"github.com/CriptoRochy/Karnize/internal/app"
+	"github.com/CriptoRochy/Karnize/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/guard"
+	"github.com/CriptoRochy/Karnize/internal/netwatch"
+	"github.com/CriptoRochy/Karnize/internal/procs"
+	"github.com/CriptoRochy/Karnize/internal/ui"
+	"github.com/CriptoRochy/Karnize/internal/update"
+	"github.com/CriptoRochy/Karnize/internal/window"
 )
 
 var version = "dev"
@@ -38,7 +38,7 @@ func main() {
 	attachConsole()
 	if len(os.Args) > 1 {
 		if err := cli(os.Args[1:]); err != nil {
-			fmt.Fprintln(os.Stderr, "kordon:", err)
+			fmt.Fprintln(os.Stderr, "karnize:", err)
 			os.Exit(1)
 		}
 		return
@@ -89,11 +89,11 @@ func run(tray bool) {
 		cfg = config.Default()
 	}
 	setupLang(cfg)
-	if created && os.Getenv("KORDON_DIR") == "" {
+	if created && os.Getenv("KARNIZE_DIR") == "" {
 		// First start: run at login by default, it's a kill switch after all.
 		_ = app.SetAutostart(true)
 	}
-	app.Logf("Kordon %s started", version)
+	app.Logf("Karnize %s started", version)
 	update.Cleanup()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -110,7 +110,7 @@ func run(tray bool) {
 	stop := func() {
 		cancel()
 		<-done // Run un-freezes everything before returning
-		app.Logf("Kordon stopped")
+		app.Logf("Karnize stopped")
 	}
 
 	sig := make(chan os.Signal, 1)
@@ -136,7 +136,7 @@ func run(tray bool) {
 }
 
 func fatal(err error) {
-	fmt.Fprintln(os.Stderr, "kordon:", err)
+	fmt.Fprintln(os.Stderr, "karnize:", err)
 	os.Exit(1)
 }
 
@@ -160,7 +160,7 @@ func cli(args []string) error {
 		return nil
 	case "autostart":
 		if len(args) < 2 || (args[1] != "on" && args[1] != "off") {
-			return errors.New("usage: kordon autostart on|off")
+			return errors.New("usage: karnize autostart on|off")
 		}
 		return app.SetAutostart(args[1] == "on")
 	case "headless":
@@ -171,7 +171,7 @@ func cli(args []string) error {
 	case "panel":
 		return openPanel()
 	case "version", "--version", "-v":
-		fmt.Println("kordon", version)
+		fmt.Println("karnize", version)
 		return nil
 	case "help", "--help", "-h":
 		fmt.Print(usage)
@@ -180,21 +180,21 @@ func cli(args []string) error {
 	return fmt.Errorf("unknown command %q\n\n%s", args[0], usage)
 }
 
-const usage = `Kordon - kill switch for apps: freezes them when your network or IP changes.
+const usage = `Karnize - kill switch for apps: freezes them when your network or IP changes.
 
-  kordon                 start in the menu bar / tray
-  kordon status          current IP, country and state
-  kordon allow           allow the current IP
-  kordon allow 1.2.3.4   allow an IP or a subnet (1.2.3.0/24)
-  kordon allow NL        allow a country
-  kordon config          print the config file path
-  kordon autostart on|off
-  kordon panel           open the Kordon panel
-  kordon update          install the latest version
-  kordon headless        run without a tray icon
-  kordon version
+  karnize                 start in the menu bar / tray
+  karnize status          current IP, country and state
+  karnize allow           allow the current IP
+  karnize allow 1.2.3.4   allow an IP or a subnet (1.2.3.0/24)
+  karnize allow NL        allow a country
+  karnize config          print the config file path
+  karnize autostart on|off
+  karnize panel           open the Karnize panel
+  karnize update          install the latest version
+  karnize headless        run without a tray icon
+  karnize version
 
-https://github.com/ef1m03/kordon
+https://github.com/CriptoRochy/Karnize
 `
 
 // status checks with the user's own settings (ip_services, min_agree), not the defaults,
@@ -236,9 +236,9 @@ func status(cfg *config.Config) error {
 	s, err := app.ReadState()
 	running := err == nil && processAlive(s.PID) && time.Since(s.Updated) < 24*time.Hour
 	if !running {
-		fmt.Println("Kordon:  not running")
+		fmt.Println("Karnize: not running")
 	} else {
-		fmt.Println("Kordon: ", s.Line)
+		fmt.Println("Karnize:", s.Line)
 		if len(s.Apps) > 0 {
 			fmt.Println("Apps:   ", strings.Join(s.Apps, ", "))
 		}
@@ -296,7 +296,7 @@ func selfUpdate() error {
 		return err
 	}
 	if !update.Newer(version, rel.Version()) {
-		fmt.Println("kordon", version, "is the latest version")
+		fmt.Println("karnize", version, "is the latest version")
 		return nil
 	}
 	fmt.Println("installing", rel.Version(), "…")
@@ -311,19 +311,19 @@ func selfUpdate() error {
 		if stopProcess(s.PID) {
 			return restart()
 		}
-		fmt.Println("restart Kordon (Quit in the menu and open it again) to use it")
+		fmt.Println("restart Karnize (Quit in the menu and open it again) to use it")
 	}
 	return nil
 }
 
-// openPanel shows the running Kordon's panel in a window (or the browser on Linux).
+// openPanel shows the running Karnize's panel in a window (or the browser on Linux).
 func openPanel() error {
 	p, err := ui.ReadPanelInfo()
 	if err != nil {
-		return errors.New("Kordon is not running - start it first")
+		return errors.New("Karnize is not running - start it first")
 	}
 	url := p.URL + "?t=" + p.Token
-	if err := window.Open(url, "Kordon", ui.T("panel.close"), ui.T("panel.quit")); err != nil {
+	if err := window.Open(url, "Karnize", ui.T("panel.close"), ui.T("panel.quit")); err != nil {
 		return app.OpenURL(url)
 	}
 	return nil

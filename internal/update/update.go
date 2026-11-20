@@ -1,4 +1,4 @@
-// Package update checks GitHub for a newer Kordon and installs it on request.
+// Package update checks GitHub for a newer Karnize and installs it on request.
 //
 // Nothing is installed silently: the menu offers the update and the user clicks.
 // The downloaded file is checked against the release's SHA256SUMS.txt.
@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ef1m03/kordon/internal/netwatch"
+	"github.com/CriptoRochy/Karnize/internal/netwatch"
 )
 
-const latestURL = "https://api.github.com/repos/ef1m03/kordon/releases/latest"
+const latestURL = "https://api.github.com/repos/CriptoRochy/Karnize/releases/latest"
 
 // Release is the part of GitHub's release JSON that matters here.
 type Release struct {
@@ -84,11 +84,11 @@ func Newer(current, latest string) bool {
 func AssetName(goos, goarch string) string {
 	switch goos {
 	case "darwin":
-		return "Kordon-macos.zip"
+		return "Karnize-macos.zip"
 	case "windows":
-		return "kordon-windows-" + goarch + ".exe"
+		return "karnize-windows-" + goarch + ".exe"
 	}
-	return "kordon-linux-" + goarch + ".tar.gz"
+	return "karnize-linux-" + goarch + ".tar.gz"
 }
 
 // Latest asks GitHub for the newest release.
@@ -191,7 +191,7 @@ func Install(ctx context.Context, r Release) (restart func() error, err error) {
 		return nil, err
 	}
 	exe, _ = filepath.EvalSymlinks(exe)
-	dir, err := os.MkdirTemp("", "kordon-update-")
+	dir, err := os.MkdirTemp("", "karnize-update-")
 	if err != nil {
 		return nil, err
 	}

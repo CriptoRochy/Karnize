@@ -13,11 +13,11 @@ import (
 
 	"fyne.io/systray"
 
-	"github.com/ef1m03/kordon/internal/app"
-	"github.com/ef1m03/kordon/internal/config"
-	"github.com/ef1m03/kordon/internal/guard"
-	"github.com/ef1m03/kordon/internal/procs"
-	"github.com/ef1m03/kordon/internal/update"
+	"github.com/CriptoRochy/Karnize/internal/app"
+	"github.com/CriptoRochy/Karnize/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/guard"
+	"github.com/CriptoRochy/Karnize/internal/procs"
+	"github.com/CriptoRochy/Karnize/internal/update"
 )
 
 const (
@@ -62,7 +62,7 @@ func (t *Tray) Run() {
 }
 
 func (t *Tray) onReady() {
-	systray.SetTooltip("Kordon")
+	systray.SetTooltip("Karnize")
 	t.setIcon(guard.Snapshot{Config: config.Default()})
 
 	t.mUpdate = systray.AddMenuItem("", "")
@@ -212,7 +212,7 @@ func (t *Tray) loop() {
 		case <-t.mAbout.ClickedCh:
 			_ = app.OpenURL(app.RepoURL)
 		case <-t.mStudio.ClickedCh:
-			_ = app.OpenURL(app.StudioURL)
+			_ = app.OpenURL(app.UpstreamURL)
 		case <-t.mQuit.ClickedCh:
 			if t.OnQuit != nil {
 				t.OnQuit()
@@ -265,7 +265,7 @@ func (t *Tray) InstallUpdate() {
 	}
 }
 
-// installUpdate replaces Kordon with the new version and restarts it; true means we're exiting.
+// installUpdate replaces Karnize with the new version and restarts it; true means we're exiting.
 func (t *Tray) installUpdate() bool {
 	t.mu.Lock()
 	rel := t.latest
@@ -473,7 +473,7 @@ func (t *Tray) setIcon(s guard.Snapshot) {
 
 	tip := map[Tone]string{Gray: T("tip.paused"), Green: T("tip.ok"), Amber: T("tip.frozen"), Red: T("tip.blocked")}[tone]
 	if s.Status == guard.Starting && !s.Paused() {
-		tip = "Kordon: " + T("starting")
+		tip = "Karnize: " + T("starting")
 	}
 	if s.IP != "" && s.Config.MenuBar != "icon" {
 		if s.Config.MenuBar == "country" {
@@ -485,7 +485,7 @@ func (t *Tray) setIcon(s guard.Snapshot) {
 	systray.SetTooltip(tip)
 }
 
-// HeadlessRender logs and notifies without a tray icon (kordon headless).
+// HeadlessRender logs and notifies without a tray icon (karnize headless).
 func HeadlessRender(s guard.Snapshot, evs []guard.Event) {
 	for _, e := range evs {
 		line := EventLine(e)
@@ -501,13 +501,13 @@ func HeadlessRender(s guard.Snapshot, evs []guard.Event) {
 	})
 }
 
-// OpenPanel starts `kordon panel`, which shows the panel window.
+// OpenPanel starts `karnize panel`, which shows the panel window.
 func OpenPanel() {
 	exe, err := os.Executable()
 	if err != nil {
 		return
 	}
 	cmd := exec.Command(exe, "panel")
-	cmd.Env = append(os.Environ(), "KORDON_CHILD=1") // the panel needs no supervisor
+	cmd.Env = append(os.Environ(), "KARNIZE_CHILD=1") // the panel needs no supervisor
 	_ = cmd.Start()
 }

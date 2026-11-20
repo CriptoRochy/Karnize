@@ -19,16 +19,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ef1m03/kordon/internal/app"
-	"github.com/ef1m03/kordon/internal/config"
-	"github.com/ef1m03/kordon/internal/guard"
-	"github.com/ef1m03/kordon/internal/procs"
+	"github.com/CriptoRochy/Karnize/internal/app"
+	"github.com/CriptoRochy/Karnize/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/guard"
+	"github.com/CriptoRochy/Karnize/internal/procs"
 )
 
 //go:embed panel
 var panelFiles embed.FS
 
-// Server is the local API behind the Kordon panel. It listens on 127.0.0.1 only,
+// Server is the local API behind the Karnize panel. It listens on 127.0.0.1 only,
 // and every request needs the random token from panel.json (readable by the user
 // only), so neither another site in a browser nor another user can reach it.
 type Server struct {
@@ -43,9 +43,9 @@ type Server struct {
 	addr  string
 }
 
-const cookieName = "kordon"
+const cookieName = "karnize"
 
-// PanelInfo is what `kordon panel` reads to find the server.
+// PanelInfo is what `karnize panel` reads to find the server.
 type PanelInfo struct {
 	URL   string `json:"url"`
 	Token string `json:"token"`
@@ -53,7 +53,7 @@ type PanelInfo struct {
 
 func panelInfoPath() string { return filepath.Join(app.Dir(), "panel.json") }
 
-// ReadPanelInfo returns the address of the running Kordon's panel.
+// ReadPanelInfo returns the address of the running Karnize's panel.
 func ReadPanelInfo() (PanelInfo, error) {
 	var p PanelInfo
 	b, err := os.ReadFile(panelInfoPath())
@@ -114,7 +114,7 @@ func (s *Server) guardRequest(next http.Handler) http.Handler {
 		}
 		c, err := r.Cookie(cookieName)
 		if err != nil || !s.tokenOK(c.Value) {
-			http.Error(w, "Откройте панель из меню Kordon. Open the panel from the Kordon menu.", http.StatusUnauthorized)
+			http.Error(w, "Откройте панель из меню Karnize. Open the panel from the Karnize menu.", http.StatusUnauthorized)
 			return
 		}
 		if r.Method == http.MethodPost && r.Header.Get("Origin") != "http://"+s.addr {
@@ -377,7 +377,7 @@ func (s *Server) apply(a action) error {
 	case "report":
 		return app.OpenURL(app.ReportURL(s.Version))
 	case "open_url":
-		if a.Value == app.RepoURL || a.Value == app.StudioURL || a.Value == app.TelegramURL || strings.HasPrefix(a.Value, app.RepoURL+"/") {
+		if a.Value == app.RepoURL || a.Value == app.UpstreamURL || strings.HasPrefix(a.Value, app.RepoURL+"/") {
 			return app.OpenURL(a.Value)
 		}
 		return errors.New("unknown link")

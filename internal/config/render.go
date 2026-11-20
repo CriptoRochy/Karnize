@@ -23,13 +23,13 @@ var templates = map[string]tpl{
 			"# и страну видит сам сервис. Нужно при раздельной маршрутизации, когда сервисы проверки IP\n" +
 			"# называют разные адреса. Для своих приложений можно указать route: [\"https://.../cdn-cgi/trace\"].",
 		rules:   "# Свои правила для отдельных приложений вместо общих allow. Ключ - id из apps\n# или имя своего приложения. Пример:\n#   cursor:\n#     countries: [NL, DE, US]",
-		trusted: "# Доверенные сети: здесь приложения работают без проверки IP (дом, офис).\n# Сеть узнаётся по её роутеру. Проще добавлять из панели Kordon: «Доверять этой сети».",
+		trusted: "# Доверенные сети: здесь приложения работают без проверки IP (дом, офис).\n# Сеть узнаётся по её роутеру. Проще добавлять из панели Karnize: «Доверять этой сети».",
 		dns:     "# Утечка DNS (запросы к сайтам идут мимо VPN): warn - предупредить,\n# block - заморозить, как при чужом IP, off - не проверять.",
-		header: "# Kordon - настройки. Сохраните файл, и Kordon подхватит изменения сам, перезапуск не нужен.\n" +
-			"# Справка: https://github.com/ef1m03/kordon#настройки",
+		header: "# Karnize - настройки. Сохраните файл, и Karnize подхватит изменения сам, перезапуск не нужен.\n" +
+			"# Справка: https://github.com/CriptoRochy/Karnize#настройки",
 		apps: "# Какие приложения защищать. Готовые: claude, chatgpt, codex, cursor, windsurf,\n" +
 			"# copilot, gemini, perplexity, telegram, discord, slack, zoom.",
-		appsList: "# Список и как их ищет Kordon - в меню «Защищаемые приложения».",
+		appsList: "# Список и как их ищет Karnize - в меню «Защищаемые приложения».",
 		custom: "# Свои приложения. match - имя файла (myapp, myapp.exe) или часть пути (/MyApp.app/),\n" +
 			"# для скриптов - часть командной строки с префиксом args: (args:my-cli.js).\n" +
 			"# Пример:\n#   - name: My App\n#     match: [\"/MyApp.app/\", \"myapp.exe\"]",
@@ -56,10 +56,10 @@ var templates = map[string]tpl{
 			"# and country the service sees. Needed with split routing, when the IP services disagree.\n" +
 			"# Custom apps can set route: [\"https://.../cdn-cgi/trace\"].",
 		rules:   "# Per-app rules instead of the shared allow list. The key is an id from apps\n# or a custom app's name. Example:\n#   cursor:\n#     countries: [NL, DE, US]",
-		trusted: "# Trusted networks: apps run here without the IP check (home, office).\n# A network is recognised by its router. Easier from the Kordon panel: \"Trust this network\".",
+		trusted: "# Trusted networks: apps run here without the IP check (home, office).\n# A network is recognised by its router. Easier from the Karnize panel: \"Trust this network\".",
 		dns:     "# DNS leaks (lookups bypass the VPN): warn - notify, block - freeze like a\n# foreign IP, off - don't check.",
-		header: "# Kordon settings. Save the file and Kordon picks the changes up, no restart needed.\n" +
-			"# Docs: https://github.com/ef1m03/kordon/blob/main/README.en.md#settings",
+		header: "# Karnize settings. Save the file and Karnize picks the changes up, no restart needed.\n" +
+			"# Docs: https://github.com/CriptoRochy/Karnize/blob/main/README.en.md#settings",
 		apps: "# Which apps to protect. Built-in: claude, chatgpt, codex, cursor, windsurf,\n" +
 			"# copilot, gemini, perplexity, telegram, discord, slack, zoom.",
 		appsList: "# See the \"Protected apps\" menu for how each one is matched.",

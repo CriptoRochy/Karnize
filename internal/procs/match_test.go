@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ef1m03/kordon/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/config"
 )
 
 func TestRuleMatch(t *testing.T) {

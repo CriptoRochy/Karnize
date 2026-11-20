@@ -35,10 +35,10 @@ func TestNewer(t *testing.T) {
 
 func TestAssetName(t *testing.T) {
 	for _, c := range [][3]string{
-		{"darwin", "arm64", "Kordon-macos.zip"},
-		{"windows", "amd64", "kordon-windows-amd64.exe"},
-		{"windows", "arm64", "kordon-windows-arm64.exe"},
-		{"linux", "amd64", "kordon-linux-amd64.tar.gz"},
+		{"darwin", "arm64", "Karnize-macos.zip"},
+		{"windows", "amd64", "karnize-windows-amd64.exe"},
+		{"windows", "arm64", "karnize-windows-arm64.exe"},
+		{"linux", "amd64", "karnize-linux-amd64.tar.gz"},
 	} {
 		if got := AssetName(c[0], c[1]); got != c[2] {
 			t.Errorf("%s/%s -> %s", c[0], c[1], got)
@@ -47,11 +47,11 @@ func TestAssetName(t *testing.T) {
 }
 
 func TestSumFor(t *testing.T) {
-	sums := "aaa  Kordon-macos.zip\nBBB  kordon-windows-amd64.exe\nccc *kordon-linux-amd64.tar.gz\n"
-	if sumFor(sums, "kordon-windows-amd64.exe") != "bbb" || sumFor(sums, "kordon-linux-amd64.tar.gz") != "ccc" {
+	sums := "aaa  Karnize-macos.zip\nBBB  karnize-windows-amd64.exe\nccc *karnize-linux-amd64.tar.gz\n"
+	if sumFor(sums, "karnize-windows-amd64.exe") != "bbb" || sumFor(sums, "karnize-linux-amd64.tar.gz") != "ccc" {
 		t.Fatal("sum not found")
 	}
-	if sumFor(sums, "Kordon-macos") != "" {
+	if sumFor(sums, "Karnize-macos") != "" {
 		t.Fatal("partial name matched")
 	}
 }

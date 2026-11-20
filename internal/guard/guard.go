@@ -1,4 +1,4 @@
-// Package guard is Kordon's core: it decides when the protected apps may run.
+// Package guard is Karnize's core: it decides when the protected apps may run.
 //
 //	Starting ──first check──▶ OK ◀───────── allowed IP ──────────┐
 //	                           │                                 │
@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ef1m03/kordon/internal/config"
-	"github.com/ef1m03/kordon/internal/procs"
+	"github.com/CriptoRochy/Karnize/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/procs"
 )
 
 type Status int
@@ -61,7 +61,7 @@ const (
 	historyLen = 50
 )
 
-// Forever pauses until Kordon restarts.
+// Forever pauses until Karnize restarts.
 const Forever = time.Duration(1<<63 - 1)
 
 type ProbeResult struct {
@@ -151,7 +151,7 @@ type Guard struct {
 	lastKey  string
 }
 
-// Counters are totals since Kordon started, for the statistics.
+// Counters are totals since Karnize started, for the statistics.
 type Counters struct {
 	Freezes, Saves, Blocks, Killed int
 	FrozenSeconds                  float64
@@ -389,7 +389,7 @@ func (g *Guard) HandleProbe(now time.Time, r ProbeResult) {
 	if g.autoAllow {
 		g.autoAllow = false
 		if g.cfg.Allow.IsEmpty() {
-			// First run: whatever network the user installed Kordon on is the right one.
+			// First run: whatever network the user installed Karnize on is the right one.
 			// With split routing the IP services may see the direct address: what the
 			// protected services see is the VPN, so that is what gets allowed.
 			ip, cc := r.IP, r.Country
@@ -668,7 +668,7 @@ func (g *Guard) enforce(now time.Time) {
 	}
 
 	if !g.recovered {
-		// If Kordon crashed while apps were frozen, they would stay frozen forever.
+		// If Karnize crashed while apps were frozen, they would stay frozen forever.
 		g.recovered = true
 		for _, p := range list {
 			_ = g.d.Procs.Resume(p)
@@ -815,7 +815,7 @@ func (g *Guard) AllowCurrentCountry(now time.Time) bool {
 	return true
 }
 
-// TrustCurrentNetwork marks the local network Kordon is on as trusted.
+// TrustCurrentNetwork marks the local network Karnize is on as trusted.
 func (g *Guard) TrustCurrentNetwork(now time.Time, name string) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()

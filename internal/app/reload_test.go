@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ef1m03/kordon/internal/config"
+	"github.com/CriptoRochy/Karnize/internal/config"
 )
 
 // A config read while an editor is still writing it must never be applied:
 // an empty file parses as the defaults (Claude protected, nothing allowed).
 func TestReloadIgnoresEmptyAndUnsettledConfig(t *testing.T) {
-	t.Setenv("KORDON_DIR", t.TempDir())
+	t.Setenv("KARNIZE_DIR", t.TempDir())
 	cfg := config.Default()
 	cfg.Apps = []string{"chatgpt"}
 	if err := config.Save(ConfigPath(), cfg); err != nil {

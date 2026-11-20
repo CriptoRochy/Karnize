@@ -1,15 +1,26 @@
-Kordon
-Copyright (C) 2026 Efimov Dev - https://efimovdev.ru
+Karnize
+Copyright (C) 2026 CriptoRochy - https://github.com/CriptoRochy/Karnize
 
-The source code is licensed under the GNU General Public License v3.0, see LICENSE.
-Versions 1.0.0 - 1.2.1 were released under the MIT license and stay available under it.
+Karnize is a fork of Kordon 1.2.2:
+  Kordon, Copyright (C) 2026 Efimov Dev - https://efimovdev.ru
+  Source: https://github.com/ef1m03/kordon/tree/v1.2.2 (GPL-3.0)
 
-The name "Kordon" and the Kordon logo are not licensed under the GPL. A modified
-version or a fork must use a different name and logo and must not present itself
-as Kordon or as an official build. Official builds come only from
-https://github.com/ef1m03/kordon/releases and carry a GitHub build attestation.
+Karnize is licensed under the GNU General Public License v3.0, see LICENSE.
+The changes made in Karnize are listed in CHANGELOG.md and in the git history.
 
-Название Kordon и логотип Kordon не входят в лицензию GPL. Изменённая версия или
-форк должны называться иначе, использовать другой логотип и не выдавать себя за
-Kordon или его официальную сборку. Официальные сборки - только с
-https://github.com/ef1m03/kordon/releases, у каждой есть аттестация сборки GitHub.
+Karnize is not Kordon and is not an official Kordon build. As the Kordon NOTICE
+requires, Karnize uses its own name and logo; "Kordon" and the Kordon logo belong
+to Efimov Dev and are not used here except to credit the original work.
+
+Karnize - форк Kordon 1.2.2 (© Efimov Dev, GPL-3.0). Это не Kordon и не его
+официальная сборка: у форка своё название и свой логотип. Название и логотип
+Kordon принадлежат Efimov Dev и упоминаются только как указание авторства.
+
+Third-party components, under their own licenses:
+- fyne.io/systray (Apache-2.0)
+- github.com/gofrs/flock (BSD-3-Clause)
+- github.com/godbus/dbus/v5 (BSD-2-Clause)
+- github.com/webview/webview_go (MIT)
+- golang.org/x/sys, golang.org/x/text, golang.org/x/image (BSD-3-Clause),
+  including the Go fonts (BSD-3-Clause)
+- gopkg.in/yaml.v3 (MIT, Apache-2.0)

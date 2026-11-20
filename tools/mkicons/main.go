@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ef1m03/kordon/internal/ui"
+	"github.com/CriptoRochy/Karnize/internal/ui"
 )
 
 func main() {
@@ -17,14 +17,14 @@ func main() {
 	if len(os.Args) > 1 {
 		out = os.Args[1]
 	}
-	set := filepath.Join(out, "Kordon.iconset")
+	set := filepath.Join(out, "Karnize.iconset")
 	must(os.MkdirAll(set, 0o755))
 	for _, n := range []int{16, 32, 128, 256, 512} {
 		save(filepath.Join(set, fmt.Sprintf("icon_%dx%d.png", n, n)), n)
 		save(filepath.Join(set, fmt.Sprintf("icon_%dx%d@2x.png", n, n)), n*2)
 	}
 	save(filepath.Join(out, "icon-256.png"), 256)
-	must(os.WriteFile(filepath.Join(out, "kordon.ico"),
+	must(os.WriteFile(filepath.Join(out, "karnize.ico"),
 		ui.ICO(ui.AppIcon(16), ui.AppIcon(32), ui.AppIcon(48), ui.AppIcon(256)), 0o644))
 }
 

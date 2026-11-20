@@ -1,6 +1,6 @@
 "use strict";
 
-// Kordon panel. Talks to the local Kordon over /api; every value from it is
+// Karnize panel. Talks to the local Karnize over /api; every value from it is
 // escaped before it goes into the page (custom app names come from config.yaml).
 
 const L = {
@@ -8,10 +8,10 @@ const L = {
     overview: "Обзор", apps: "Приложения", allow: "Разрешено", networks: "Сети", stats: "Статистика",
     history: "История", settings: "Настройки", about: "О программе",
     lead_overview: "Что сейчас с сетью и защищёнными приложениями",
-    lead_apps: "Kordon замораживает выбранные программы, когда сеть или IP не те. У каждой могут быть свои правила.",
+    lead_apps: "Karnize замораживает выбранные программы, когда сеть или IP не те. У каждой могут быть свои правила.",
     lead_allow: "Где приложениям можно работать. Подходит хоть что-то одно - значит можно.",
     lead_networks: "В доверенных сетях (дом, офис) приложения работают без проверки IP. Сеть узнаётся по её роутеру.",
-    lead_stats: "Сколько раз Kordon вмешивался за последние 14 дней",
+    lead_stats: "Сколько раз Karnize вмешивался за последние 14 дней",
     lead_history: "Последние события",
     lead_settings: "Изменения сохраняются сразу",
     ip: "Внешний IP", ipv6: "IPv6", dns: "DNS", network: "Сеть", none: "нет", offline: "нет интернета", checking: "проверяю…",
@@ -29,9 +29,9 @@ const L = {
     current_net: "Текущая сеть", router: "Роутер", net_name: "Название, например «Дом»", no_trusted: "Доверенных сетей пока нет",
     here: "вы здесь", rename: "Переименовать",
     s_saves: "раз VPN вернулся вовремя", s_freezes: "заморозок", s_blocks: "раз закрыл приложения", s_time: "в заморозке всего",
-    legend_saves: "вернулся вовремя", legend_blocks: "закрыто", legend_other: "заморожено", trusted_list: "Доверенные сети", session: "С запуска Kordon",
+    legend_saves: "вернулся вовремя", legend_blocks: "закрыто", legend_other: "заморожено", trusted_list: "Доверенные сети", session: "С запуска Karnize",
     g_protect: "Защита", g_iface: "Интерфейс", g_system: "Система", g_files: "Файлы и помощь",
-    o_freeze: "Замораживать при смене сети", o_freeze_d: "Пока Kordon проверяет IP, обычно доля секунды",
+    o_freeze: "Замораживать при смене сети", o_freeze_d: "Пока Karnize проверяет IP, обычно доля секунды",
     o_offline: "Замораживать без интернета", o_offline_d: "Когда интернет пропал целиком",
     o_ipv6: "Проверять IPv6", o_ipv6_d: "Ловит VPN, которые заворачивают только IPv4",
     o_dns: "Утечка DNS", o_dns_d: "Запросы к сайтам идут мимо VPN", dns_warn: "Предупреждать", dns_block: "Замораживать", dns_off: "Не проверять",
@@ -42,17 +42,17 @@ const L = {
     o_autostart: "Запускать при входе в систему", o_update: "Проверять обновления", o_update_d: "Раз в сутки, ставятся только по клику",
     open_config: "Открыть config.yaml", open_log: "Открыть журнал", report: "Сообщить о проблеме", sec: "с",
     update_avail: "Доступна версия", update_btn: "Обновить", saved: "Сохранено", about_text: "Kill switch для приложений: замораживает выбранные программы, когда отваливается VPN или меняется IP. Открытый код, без телеметрии.",
-    made: "Сделано в Efimov Dev", github: "Kordon на GitHub", license: "Лицензия GPL-3.0", telegram: "Написать в Telegram",
+    made: "Основано на Kordon от Efimov Dev", github: "Karnize на GitHub", license: "Лицензия GPL-3.0", telegram: "Сообщить об ошибке",
     history_empty: "Пока ничего не случилось", paused_until: "Пауза до", paused_forever: "Пауза до перезапуска",
   },
   en: {
     overview: "Overview", apps: "Apps", allow: "Allowed", networks: "Networks", stats: "Statistics",
     history: "History", settings: "Settings", about: "About",
     lead_overview: "Your network and protected apps right now",
-    lead_apps: "Kordon freezes the chosen apps when the network or IP isn't right. Each one can have its own rules.",
+    lead_apps: "Karnize freezes the chosen apps when the network or IP isn't right. Each one can have its own rules.",
     lead_allow: "Where apps may run. Matching any one entry is enough.",
     lead_networks: "On trusted networks (home, office) apps run without the IP check. A network is recognised by its router.",
-    lead_stats: "How often Kordon stepped in over the last 14 days",
+    lead_stats: "How often Karnize stepped in over the last 14 days",
     lead_history: "Recent events",
     lead_settings: "Changes are saved right away",
     ip: "Public IP", ipv6: "IPv6", dns: "DNS", network: "Network", none: "none", offline: "no internet", checking: "checking…",
@@ -70,9 +70,9 @@ const L = {
     current_net: "Current network", router: "Router", net_name: "Name, e.g. \"Home\"", no_trusted: "No trusted networks yet",
     here: "you're here", rename: "Rename",
     s_saves: "times the VPN came back in time", s_freezes: "freezes", s_blocks: "times apps were closed", s_time: "spent frozen",
-    legend_saves: "back in time", legend_blocks: "closed", legend_other: "frozen", trusted_list: "Trusted networks", session: "Since Kordon started",
+    legend_saves: "back in time", legend_blocks: "closed", legend_other: "frozen", trusted_list: "Trusted networks", session: "Since Karnize started",
     g_protect: "Protection", g_iface: "Interface", g_system: "System", g_files: "Files and help",
-    o_freeze: "Freeze on network change", o_freeze_d: "While Kordon checks the IP, usually a split second",
+    o_freeze: "Freeze on network change", o_freeze_d: "While Karnize checks the IP, usually a split second",
     o_offline: "Freeze when offline", o_offline_d: "When the internet is gone entirely",
     o_ipv6: "Check IPv6", o_ipv6_d: "Catches VPNs that tunnel IPv4 only",
     o_dns: "DNS leaks", o_dns_d: "Lookups bypass the VPN", dns_warn: "Warn", dns_block: "Freeze", dns_off: "Don't check",
@@ -83,7 +83,7 @@ const L = {
     o_autostart: "Start at login", o_update: "Check for updates", o_update_d: "Once a day, installed only when you click",
     open_config: "Open config.yaml", open_log: "Open log", report: "Report a problem", sec: "s",
     update_avail: "Version available:", update_btn: "Update", saved: "Saved", about_text: "A kill switch for apps: freezes the apps you choose when the VPN drops or your IP changes. Open source, no telemetry.",
-    made: "Made by Efimov Dev", github: "Kordon on GitHub", license: "GPL-3.0 license", telegram: "Message on Telegram",
+    made: "Based on Kordon by Efimov Dev", github: "Karnize on GitHub", license: "GPL-3.0 license", telegram: "Report a bug",
     history_empty: "Nothing has happened yet", paused_until: "Paused until", paused_forever: "Paused until restart",
   },
 };
@@ -354,10 +354,10 @@ function settings() {
 }
 
 function about() {
-  return `<div class="card about"><img src="icon.png" alt=""><div class="big">Kordon ${esc(S.version)}</div>
+  return `<div class="card about"><img src="icon.png" alt=""><div class="big">Karnize ${esc(S.version)}</div>
     <p>${t("about_text")}</p>
-    <div class="links"><button class="btn" data-url="https://github.com/ef1m03/kordon">${t("github")}</button><button class="btn" data-url="https://t.me/efimov_dev">${t("telegram")} @efimov_dev</button><button class="btn primary" data-url="https://efimovdev.ru">${t("made")}</button></div>
-    <p style="font-size:12px">© Efimov Dev · efimovdev.ru · ${t("license")}</p></div>`;
+    <div class="links"><button class="btn" data-url="https://github.com/CriptoRochy/Karnize">${t("github")}</button><button class="btn" data-url="https://github.com/CriptoRochy/Karnize/issues">${t("telegram")}</button><button class="btn primary" data-url="https://github.com/ef1m03/kordon/tree/v1.2.2">${t("made")}</button></div>
+    <p style="font-size:12px">Karnize · ${t("license")} · © 2026 Efimov Dev (Kordon), CriptoRochy (Karnize)</p></div>`;
 }
 
 const RENDER = { overview, apps, allow, networks, stats, history, settings, about };
@@ -391,7 +391,7 @@ async function refresh(force = false) {
     const a = document.activeElement;
     if (!force && a && a.closest("main") && (a.tagName === "INPUT" || a.tagName === "SELECT")) return;
     render();
-  } catch (_) { /* Kordon restarting: try again on the next tick */ }
+  } catch (_) { /* Karnize restarting: try again on the next tick */ }
 }
 
 // ---------- events ----------
