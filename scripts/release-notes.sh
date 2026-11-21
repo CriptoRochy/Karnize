@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 v="${1#v}"
 
 section="$(awk -v v="$v" '
+  /^# / { inside = 0 ; next }
   /^## / { inside = ($2 == v) ; next }
   inside { print }
 ' CHANGELOG.md)"
